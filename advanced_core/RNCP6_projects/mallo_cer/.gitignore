@@ -1,0 +1,6 @@
+test_exec
+test_defines_exec
+compile_commands.json
+libft_malloc.so
+/obj
+.cache
