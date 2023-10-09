@@ -16,6 +16,8 @@ void*		get_memory(size_t size)
 	if (!ptr)
 	{
 		new_pile = create_new_pile(size, chunk_type);
+        if (chunk_type == HUMUNGOUS)
+            return ((void*) new_pile + ALIGNED_SIZEOF_PILE + ALIGNED_SIZEOF_CHUNK);
 		ptr = get_chunk_from_specific_pile(size, new_pile);
 	}
     // make it so that everything knows what is still free and what is not
@@ -35,5 +37,8 @@ void*		malloc(size_t size)
     // set envs and init
 	if (unlock_mutex_wrapper())
 		exit(1);
+    // printf("anchor:\t%p\n", g_pile_anchor);
+    // printf("chunk:\t%p\n", g_pile_anchor->first_chunk);
+    // printf("data:\t%p\n", (void*)g_pile_anchor->first_chunk + ALIGNED_SIZEOF_CHUNK);
 	return (ret);
 }

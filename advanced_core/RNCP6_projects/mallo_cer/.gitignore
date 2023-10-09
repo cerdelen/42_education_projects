@@ -4,3 +4,4 @@ compile_commands.json
 libft_malloc.so
 /obj
 .cache
+.vscode

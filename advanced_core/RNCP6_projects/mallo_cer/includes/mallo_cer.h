@@ -16,7 +16,6 @@
 #define ALIGNED_SIZEOF_PILE ((size_t) ((sizeof(t_pile) + 15) & ~15))
 #define ALIGNED_SIZEOF_CHUNK ((size_t) ((sizeof(t_chunk) + 15) & ~15))
 
-
 struct pile;
 struct chunk;
 struct t_pile;
@@ -73,7 +72,7 @@ typedef struct s_pile
 {
 	struct s_pile*		next;
 	struct s_pile*		prev;
-	struct s_chunk*		first_empty;
+	struct s_chunk*		first_chunk;
 	size_t				empty_space;
 	t_chunk_type		chunk_type;
 }	t_pile;
@@ -102,15 +101,44 @@ void			show_alloc_mem();
 void*			create_new_pile(size_t size, t_chunk_type chunk_type);
 void*			create_new_pile_s_or_b(t_chunk_type chunk_type);
 void*			create_humungous_new_pile(size_t size);
+t_pile*         find_parent_pile(t_chunk* chunk);
+t_chunk*        check_if_pile_contains_chunk(t_pile* pile, void* ptr);
+void            free_pile(t_pile* pile);
 
 // CHUNKS
 void*			get_chunk_from_specific_pile(size_t size, t_pile *pile);
 void*			get_chunk_from_piles(size_t size, t_chunk_type chunk_type);
 t_chunk_type	get_chunk_type(size_t size);
+void			merge_chunks(t_chunk* lh, t_chunk* rh, t_pile* parent_pile);
+t_chunk*       find_chunk(void* ptr);
+void            free_chunk(t_chunk* chunk, t_pile* parent_pile);
+void            shrink_chunk(t_chunk* chunk, size_t size);
+
+// LOGGING
+void            show_alloc_mem();
+void            show_alloc_mem_ex();
 
 // UTILS
 int				lock_mutex_wrapper();
 int				unlock_mutex_wrapper();
 void			ptr_swap(void* ptr1, void* ptr2);
+void	        ft_putstr_fd(char *s, int fd);
+void	        ft_putnbr_fd(int n, int fd);
+void            ft_putptr_fd(void *ptr, int fd);
+void	        ft_puthex_fd(unsigned long long num, int fd);
+void            ft_putchar_fd(char c, int fd);
+void*           ft_memmove(void *dst, const void *src, size_t n);
+int             ft_strlen(const char *s);
+int             ft_strncmp(const char *s1, const char *s2, size_t n);
+void            check_validity_of_state(size_t Piles, size_t Chunks, size_t Alloc, char *col);
+
+#define DEFAULT_TERMINAL_COL "\033[0m"
+#define GREEN_TERMINAL_COL "\33[32m"
+#define RED_TERMINAL_COL "\33[1;31m"
+#define YELLOW_TERMINAL_COL "\33[33m"
+#define BLUE_TERMINAL_COL "\33[34m"
+#define PURPLE_TERMINAL_COL "\33[35m"
+#define ON_PURPLE_TERMINAL_COL "\033[44m"
+#define ON_PINK_TERMINAL_COL "\033[45m"
 
 #endif // !MALLO_CER_H

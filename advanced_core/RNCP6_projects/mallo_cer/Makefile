@@ -2,8 +2,6 @@ CC = gcc
 ALL_INC = $(addprefix -I, includes $(wildcard libs/*/includes))
 CFLAGS = -Wall -Wextra -Werror $(ALL_INC)
 
-TEST_EXEC = test_exec
-
 SRC_DIR = src
 OBJ_DIR = obj
 # List of all source directories
@@ -25,10 +23,10 @@ OBJ = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC))
 TARGET = obj/libft_malloc_$(HOSTTYPE).so
 LINK_TARGET = libft_malloc.so
 
-$(OBJ_DIRS):
-	mkdir -p $@
-
 all: $(OBJ_DIRS) $(TARGET)
+
+$(OBJ_DIRS):
+	@mkdir -p $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@$(CC) $(CFLAGS) -c $< -o $@
@@ -40,19 +38,12 @@ $(TARGET): $(OBJ)
 	@ln -s $@ $(LINK_TARGET)
 	@echo "\n\033[92mSym-link created!\033[0m"
 
-
-.PHONY: fclean clean
-
 clean:
 	@rm -rf obj
 
 fclean: clean
+	@$(RM) ./a.out
 	@$(RM) $(LINK_TARGET) $(TARGET)
 
 re: fclean all
 
-test: all
-	@gcc test.c $(LINK_TARGET) -o $(TEST_EXEC)
-
-run: test
-	@./$(TEST_EXEC)
