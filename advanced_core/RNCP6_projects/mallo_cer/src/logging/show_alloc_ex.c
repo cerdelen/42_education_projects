@@ -34,7 +34,6 @@ void        hex_dump_chunk(t_chunk* chunk)
         i++;
         val++;
     }
-    //here hex dump
     ft_putstr_fd("\n", 1);
 }
 
