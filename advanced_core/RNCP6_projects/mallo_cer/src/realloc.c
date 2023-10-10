@@ -75,8 +75,11 @@ void*           relocate_chunk(t_chunk* chunk, size_t size)
         }
         if (chunk->prev != NULL)
         {
-            if ((chunk->size + chunk->prev->size + ALIGNED_SIZEOF_CHUNK) >= size)
-                return (realloc_merge_current_with_prev(chunk, size));
+			if (chunk->prev->free == true)
+			{
+				if ((chunk->size + chunk->prev->size + ALIGNED_SIZEOF_CHUNK) >= size)
+					return (realloc_merge_current_with_prev(chunk, size));
+			}
         }
         if (chunk->prev != NULL && chunk->next != NULL)
         {
@@ -99,16 +102,7 @@ void*           relocate_chunk(t_chunk* chunk, size_t size)
     return (NULL);
 }
 
-/*
- *  
-     The realloc() function tries to change the size of the allocation pointed to by ptr to size, and returns ptr.  If there is not enough room
-     to enlarge the memory allocation pointed to by ptr, realloc() creates a new allocation, copies as much of the old data pointed to by ptr as
-     will fit to the new allocation, frees the old allocation, and returns a pointer to the allocated memory.  If ptr is NULL, realloc() is
-     identical to a call to malloc() for size bytes.  If size is zero and ptr is not NULL, a new, minimum sized object is allocated and the
-     original object is freed.  When extending a region allocated with calloc(3), realloc(3) does not guarantee that the additional memory is
-     also zero-filled.
- * */
-void*           realloc(void *ptr, size_t size)
+void*		realloc_wrapped(void* ptr, size_t size)
 {
     if (ptr == NULL)    
         return (malloc(size));
@@ -129,4 +123,24 @@ void*           realloc(void *ptr, size_t size)
     if (chunk != NULL)
         return ((void*)chunk + ALIGNED_SIZEOF_CHUNK);
     return (NULL);
+}
+
+/*
+ *  
+     The realloc() function tries to change the size of the allocation pointed to by ptr to size, and returns ptr.  If there is not enough room
+     to enlarge the memory allocation pointed to by ptr, realloc() creates a new allocation, copies as much of the old data pointed to by ptr as
+     will fit to the new allocation, frees the old allocation, and returns a pointer to the allocated memory.  If ptr is NULL, realloc() is
+     identical to a call to malloc() for size bytes.  If size is zero and ptr is not NULL, a new, minimum sized object is allocated and the
+     original object is freed.  When extending a region allocated with calloc(3), realloc(3) does not guarantee that the additional memory is
+     also zero-filled.
+ * */
+void*           realloc(void *ptr, size_t size)
+{
+	void* r_ptr;
+	if (lock_mutex_wrapper())
+		exit(1);
+	r_ptr = realloc_wrapped(ptr, size);
+	if (unlock_mutex_wrapper())
+		exit(1);
+	return (r_ptr);
 }

@@ -4,8 +4,10 @@
 void        free(void *ptr)
 {
     // printf("Called free on %p\n", ptr);
-    if (ptr == NULL)
-        return ;
+	if (ptr == NULL)
+	return ;
+	if (lock_mutex_wrapper())
+		exit(1);
     t_chunk*    chunk = find_chunk(ptr);
 
     if (chunk != NULL)
@@ -18,5 +20,7 @@ void        free(void *ptr)
         if (pile->first_chunk->next == NULL)
             free_pile(pile);
     }
+	if (unlock_mutex_wrapper())
+		exit(1);
     // printf("Free failed %p\n", ptr);
 }

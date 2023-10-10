@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #define PAGESIZE ((size_t) getpagesize())
 #define ALIGNMENT ((size_t) 16)
