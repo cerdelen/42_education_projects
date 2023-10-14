@@ -1,5 +1,4 @@
 use std::io::Stdout;
-
 // use serde::Deserialize;
 use config::ConfigError;
 use my_config::ProcessGroupStruct;
@@ -28,12 +27,10 @@ fn launch_groups(groups: &mut Vec<ProcessGroupStruct>) {
 	}
 }
 
-
-
 pub struct AllData {
 	curr_conf:		TaskConfig,
 	term:			Terminal<CrosstermBackend<Stdout>>,	
-	display:		terminal::DisplayState,
+	display:		terminal::GUIState,
 }
 
 fn main() -> Result<(), ConfigError>{
@@ -48,12 +45,12 @@ fn main() -> Result<(), ConfigError>{
 	let mut state = AllData {
 		curr_conf: config,
 		term,
-		display: terminal::DisplayState::Display1,
+		display: terminal::GUIState{cursor: (0,0)},
 	};
 
 	terminal::draw_term(&mut state);
 
-	let _ = check_for_events();
+	let _ = check_for_events(&mut state);
 	// println!("{:?}!", process_groups[0].vec_of_single_processes[0].child);
 	// println!("end of main");
 	Ok(())
