@@ -8,5 +8,6 @@ edition = "2021"
 [dependencies]
 config = "0.13.3"
 serde = "1.0.188"
-tui = "0.19"
+
+# tui = "0.19"
 crossterm = "0.25"

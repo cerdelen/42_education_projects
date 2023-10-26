@@ -1,52 +1,10 @@
+use crate::my_utils::structs::{
+    ProcessConfig, ProcessGroupStruct, SingleProcessStruct, TaskConfig,
+};
 use config::{Config, ConfigError, File, FileFormat};
-use serde::Deserialize;
 use std::process::{Command, Stdio};
 
-#[derive(Deserialize, Debug, Clone)]
-pub enum ProcessSignals {
-    Signal1,
-    Signal2,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub enum ProcessRestart {
-    Always,
-    Never,
-    OnUnexpectedExits,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct ProcessConfig {
-    pub launch_command: String,
-    pub args: Option<Vec<String>>,
-    pub amt: usize,
-    pub time_of_launch: Option<u64>,
-    pub restart: ProcessRestart,
-    pub unexpected_signals: Option<Vec<ProcessSignals>>, // this will have to change somehow
-    pub restart_tries: Option<u32>,
-    pub gracefull_signal: ProcessSignals,
-    pub gracefull_period: u32,
-    pub stdout: Option<String>, // maybe empty then to stdout/sdterr (look up if there is smth like fds i can just put in)
-    pub stderr: Option<String>, // maybe empty then to stdout/sdterr (look up if there is smth like fds i can just put in)
-    pub envs: Option<Vec<(String, String)>>, //(maybe a map)
-    pub work_dir: Option<String>,
-    pub name: Option<String>,
-    // An umask to set before launching the programm??
-}
-
-pub struct SingleProcessStruct {
-    pub restart_tries: u32, // i will init this to config number and then decreas with each retry
-    pub child: Result<std::process::Child, std::io::Error>,
-}
-
-pub struct ProcessGroupStruct<'a> {
-    pub conf: &'a ProcessConfig,
-    pub cmd: Command,
-    pub vec_of_single_processes: Vec<SingleProcessStruct>, // of size amt
-    pub start_time: std::time::Instant,
-}
-
-impl ProcessGroupStruct<'_> {
+impl ProcessGroupStruct {
     pub fn launch_one_process(&mut self) {
         let mut child = self.cmd.spawn();
         let mut retries = self.conf.restart_tries.unwrap_or_default();
@@ -102,20 +60,11 @@ impl ProcessConfig {
         ProcessGroupStruct {
             start_time: std::time::Instant::now()
                 + std::time::Duration::from_secs(self.time_of_launch.unwrap_or(0)),
-            conf: self,
+            conf: self.clone(),
             vec_of_single_processes: vec![],
             cmd,
         }
-        // println!("{:?}", process_group.cmd.get_program());
-        // println!("{:?}", process_group.cmd.get_args());
-        // println!("{:?}", process_group.cmd.get_envs());
-        // println!("{:?}", self.unexpected_signals);
     }
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct TaskConfig {
-    pub applications: Vec<ProcessConfig>,
 }
 
 impl TaskConfig {

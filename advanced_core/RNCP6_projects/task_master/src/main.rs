@@ -1,14 +1,11 @@
-use std::io::Stdout;
-// use serde::Deserialize;
-use config::ConfigError;
-use my_config::ProcessGroupStruct;
-use terminal::check_for_events;
-use tui::{backend::CrosstermBackend, Terminal};
-
 mod my_config;
-use crate::my_config::TaskConfig;
-
+mod my_utils;
 mod terminal;
+use my_utils::enums::*;
+use my_utils::structs::*;
+// use crate::my_utils::enums;
+use crate::terminal::check_for_events;
+use config::ConfigError;
 
 fn build_process_groups(config: &TaskConfig) -> Vec<ProcessGroupStruct> {
     let mut process_groups: Vec<ProcessGroupStruct> = vec![];
@@ -27,32 +24,18 @@ fn launch_groups(groups: &mut Vec<ProcessGroupStruct>) {
     }
 }
 
-pub struct AllData {
-    _curr_conf: TaskConfig,
-    term: Terminal<CrosstermBackend<Stdout>>,
-    display: terminal::GUIState,
-}
-
 fn main() -> Result<(), ConfigError> {
-    let term: tui::Terminal<tui::backend::CrosstermBackend<std::io::Stdout>> =
-        terminal::build_terminal();
-
     let config: TaskConfig = TaskConfig::build()?;
 
-    let mut process_groups = build_process_groups(&config);
+    let mut process_groups: Vec<ProcessGroupStruct> = build_process_groups(&config);
 
     launch_groups(&mut process_groups);
 
-    let mut state = AllData {
-        _curr_conf: config,
-        term,
-        display: terminal::GUIState { cursor: (0, 0) },
+    let state = AllData {
+        display: DisplayState::Overview,
+        monitored_processes: process_groups,
     };
 
-    terminal::draw_term(&mut state);
-
-    let _ = check_for_events(&mut state);
-    // println!("{:?}!", process_groups[0].vec_of_single_processes[0].child);
-    // println!("end of main");
+    let _ = check_for_events(state);
     Ok(())
 }
