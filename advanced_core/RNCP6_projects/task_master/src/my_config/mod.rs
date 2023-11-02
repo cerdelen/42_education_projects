@@ -1,11 +1,11 @@
 use crate::my_utils::structs::{
     ProcessConfig, ProcessGroupStruct, SingleProcessStruct, TaskConfig,
 };
-use config::{Config, ConfigError, File, FileFormat};
+use config::{self, Config, ConfigError, FileFormat};
 use std::process::{Command, Stdio};
 
 impl ProcessGroupStruct {
-    pub fn launch_one_process(&mut self) {
+    pub fn launch_one_process(&mut self, processes: &mut Vec<SingleProcessStruct>) {
         let mut child = self.cmd.spawn();
         let mut retries = self.conf.restart_tries.unwrap_or_default();
         while child.is_err() {
@@ -15,7 +15,7 @@ impl ProcessGroupStruct {
             retries -= 1;
             child = self.cmd.spawn();
         }
-        self.vec_of_single_processes.push(SingleProcessStruct {
+        processes.push(SingleProcessStruct {
             restart_tries: retries,
             child,
         });
@@ -23,7 +23,7 @@ impl ProcessGroupStruct {
 }
 
 impl ProcessConfig {
-    pub fn build_command(&self) -> ProcessGroupStruct {
+    pub fn build_command(&self, idx: usize) -> ProcessGroupStruct {
         let mut cmd = Command::new(&self.launch_command);
         cmd.args(self.args.as_deref().unwrap_or_default());
         cmd.envs(
@@ -61,8 +61,10 @@ impl ProcessConfig {
             start_time: std::time::Instant::now()
                 + std::time::Duration::from_secs(self.time_of_launch.unwrap_or(0)),
             conf: self.clone(),
-            vec_of_single_processes: vec![],
+            // vec_of_single_processes: vec![],
             cmd,
+            start_idx: idx,
+            end_idx: idx + self.amt,
         }
     }
 }
@@ -71,10 +73,10 @@ impl TaskConfig {
     pub fn build() -> Result<TaskConfig, ConfigError> {
         let config_file = match std::env::args().nth(1) {
             Some(arg) => arg,
-            None => panic!("Provide Config File plz!"),
+            None => panic!("Provide Config config::File plz!"),
         };
         let conf = Config::builder()
-            .add_source(File::new(&config_file, FileFormat::Yaml))
+            .add_source(config::File::new(&config_file, FileFormat::Yaml))
             .build()?;
         let task_config = conf.try_deserialize::<TaskConfig>()?;
         Ok(task_config)

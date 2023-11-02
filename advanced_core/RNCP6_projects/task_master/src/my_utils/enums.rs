@@ -1,14 +1,9 @@
-use std::usize;
-
 use serde::Deserialize;
-// use config::{Config, ConfigError, File, FileFormat};
-// use std::process::{Command, Stdio};
-// use crate::my_utils::structs::SingleProcessStruct;
 
-#[allow(dead_code)]
-pub enum DisplayState {
+#[derive(Debug)]
+pub enum DisplayVariant {
     Overview,
-    DetailedSingular(usize),
+    DetailedSingular,
 }
 
 #[derive(Deserialize, Debug, Clone)]
