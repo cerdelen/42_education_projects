@@ -14,7 +14,7 @@ Config File:
         "An umask to set before launching the program"
 
     Shell Interface:
-        see status off all programms in config file
+        see status off all programms in config file ✅
         start/stop/restart programms
         reload config without stopping task master
-        stop tast master
+        stop tast master ✅

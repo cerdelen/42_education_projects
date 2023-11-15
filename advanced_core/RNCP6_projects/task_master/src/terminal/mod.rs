@@ -1,5 +1,6 @@
+use config::ConfigError;
 use crossterm::{
-    cursor::MoveTo,
+    cursor::{MoveTo, Hide, Show},
     event::{KeyCode, KeyEvent},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType},
@@ -13,22 +14,23 @@ use std::{
 use crate::{
     my_utils::{
         enums::DisplayVariant,
-        structs::{ProcessConfig, SingleProcessStruct},
+        structs::{Logger, ProcessConfig, SingleProcessStruct, TaskConfig},
     },
     terminal, AllData,
 };
 
 use crossterm::event::{poll, read, Event};
 
-fn stop_task_master(data: &mut AllData) {
+fn stop_task_master(data: &mut AllData, logging: &mut Logger) {
+    let _ = execute!(stdout(), Show);
     let _ = disable_raw_mode();
-    let _ = write!(data.debug_file, "Shutdown");
+    let _ = write!(logging.d, "Shutdown");
     exit(0);
 }
 
-fn decrease_process_idx(data: &mut AllData) {
+fn decrease_process_idx(data: &mut AllData, logging: &mut Logger) {
     let _ = write!(
-        data.debug_file,
+        logging.d,
         "Decreasing display index from: {}",
         data.display.idx
     );
@@ -37,11 +39,11 @@ fn decrease_process_idx(data: &mut AllData) {
             data.display.idx = data.display.idx - 1;
         }
     }
-    let _ = writeln!(data.debug_file, " to: {}", data.display.idx);
+    let _ = writeln!(logging.d, " to: {}", data.display.idx);
 }
-fn increase_process_idx(data: &mut AllData) {
+fn increase_process_idx(data: &mut AllData, logging: &mut Logger) {
     let _ = write!(
-        data.debug_file,
+        logging.d,
         "Decreasing display index from: {}",
         data.display.idx
     );
@@ -50,12 +52,12 @@ fn increase_process_idx(data: &mut AllData) {
             data.display.idx = data.display.idx + 1;
         }
     }
-    let _ = writeln!(data.debug_file, " to: {}", data.display.idx);
+    let _ = writeln!(logging.d, " to: {}", data.display.idx);
 }
 
-fn select_process(data: &mut AllData) {
+fn select_process(data: &mut AllData, logging: &mut Logger) {
     let _ = write!(
-        data.debug_file,
+        logging.d,
         "Changing DisplayVariant from {:?}",
         data.display.state
     );
@@ -68,62 +70,102 @@ fn select_process(data: &mut AllData) {
         }
     };
     let _ = writeln!(
-        data.debug_file,
-        " to {:?}, Sisplay index: {}",
+        logging.d,
+        " to {:?}, Display index: {}",
         data.display.state, data.display.idx
     );
 }
-fn print_full_config_single_process(data: &AllData) {
+
+fn print_full_config_single_process(data: &mut AllData, logging: &mut Logger) {
     if let DisplayVariant::DetailedSingular = data.display.state {
-        if let Some(conf) = get_process_conf(data, data.display.idx as usize) {}
+        if let Some(conf) = get_process_conf(data, data.display.idx as usize, logging) {}
     }
 }
-fn pause_resume_process(data: &mut AllData) {
-    let _ = writeln!(data.debug_file, "pause/resume");
+
+fn reload_taskmaster(data: &mut AllData, logging: &mut Logger) -> Result<(), ConfigError> {
+    let config: TaskConfig = TaskConfig::build()?;
+	let it = config.applications.iter();
+
+	for new_conf in config.applications {
+		new_conf.
+	}
+
+
+	// compare this taskconfig with implemented taskconfig
+	// kill all commands not there any more 
+	// start all commands that are new
+	// dont touch commands that are unchanged
+	// that means copy already existing processes over
+	Ok(())
 }
 
-fn reload_taskmaster(data: &mut AllData) {}
-fn reload_process(data: &mut AllData) {}
-fn kill_process(data: &mut AllData) {
-    let _ = writeln!(data.debug_file, "Kill Process");
+fn reload_process(data: &mut AllData, logging: &mut Logger) {}
+
+///Tries to kill Process
+fn kill_process(data: &mut AllData, logging: &mut Logger) {
+    // if let DisplayVariant::DetailedSingular = data.display.state {
+        let _ = write!(logging.d, "Kill Process: ");
+        if let Some(process) = data.process_array.get_mut(data.display.idx) {
+            match &mut process.child {
+                Ok(child) => match child.kill() {
+                    Ok(()) => {
+                        let _ = writeln!(logging.d, "Successful!");
+                    }
+                    Err(err) => {
+                        let _ = writeln!(logging.d, "{}", err);
+                    }
+                },
+                Err(err) => {
+                    let _ = writeln!(logging.d, "{}", err);
+                }
+            }
+        }
+    // }
 }
 
-fn reload_config(data: &mut AllData) {
-    let _ = writeln!(data.debug_file, "reload");
+///Reload
+///
+///In Overview: Reloads whole config File
+///In Detailed View: Reloads single Process
+fn reload_command(data: &mut AllData, logging: &mut Logger) {
+    let _ = writeln!(logging.d, "reload");
     match data.display.state {
-        DisplayVariant::Overview => reload_taskmaster(data),
-        DisplayVariant::DetailedSingular => reload_process(data),
-    }
+		DisplayVariant::DetailedSingular => reload_process(data, logging),
+		DisplayVariant::Overview => {
+			if let Err(err) = reload_taskmaster(data, logging) {
+					let _ = write!(logging.d, "Error reloading Config file: {}", err);
+				}
+		}
+	}
 }
 
-fn key_press(key_event: KeyEvent, data: &mut AllData) {
+///Handler for KeyEvents
+///
+///Calls necessary functions to execute Key Commands
+fn key_press(key_event: KeyEvent, data: &mut AllData, logging: &mut Logger) {
     let KeyEvent { code, .. } = key_event;
-    let _ = writeln!(data.debug_file, "");
-    let _ = writeln!(data.debug_file, "Key Pressed: {:?}", key_event.code);
+    let _ = writeln!(logging.d, "");
+    let _ = writeln!(logging.d, "Key Pressed: {:?}", key_event.code);
     match code {
         KeyCode::Char(c) => match c {
-            'q' => stop_task_master(data),
-            'd' => select_process(data),
-            'j' => increase_process_idx(data),
-            'k' => decrease_process_idx(data),
-            's' => pause_resume_process(data),
-            'r' => reload_config(data),
-            'p' => print_full_config_single_process(data),
-            't' => kill_process(data),
+            'q' => stop_task_master(data, logging),
+            'd' => select_process(data, logging),
+            'j' => increase_process_idx(data, logging),
+            'k' => decrease_process_idx(data, logging),
+            'r' => reload_command(data, logging),
+            'p' => print_full_config_single_process(data, logging),
+            't' => kill_process(data, logging),
             _ => (),
         },
         _ => (),
     }
 }
 
-fn print_header(data: &AllData) {
+fn print_header(data: &mut AllData, logging: &mut Logger) {
     let _ = match data.display.state {
-        DisplayVariant::Overview => writeln!(stdout(), "Overview!"),
-        DisplayVariant::DetailedSingular => {
-            writeln!(stdout(), "Detailed view!")
-        }
+        DisplayVariant::Overview => logging.render.push_str(&format!("Overview!\n")),
+        DisplayVariant::DetailedSingular => logging.render.push_str(&format!("Detailed view: of process: {}\n", data.display.idx)),
     };
-    let _ = writeln!(stdout(), "detailed view of process: {}", data.display.idx);
 }
 
 fn construct_name(process_conf: &ProcessConfig) -> String {
@@ -134,94 +176,138 @@ fn construct_name(process_conf: &ProcessConfig) -> String {
     }
 }
 
-fn print_process_list(data: &mut AllData) {
+fn print_process_list(data: &mut AllData, logging: &mut Logger) {
     for i in data.display.idx..data.display.idx + 5 {
-        if let Some(process_conf) = get_process_conf(data, i) {
-            let _ = write!(stdout(), "{}: {}", i, construct_name(process_conf),);
+        if let Some(process_conf) = get_process_conf(data, i, logging) {
+		 logging.render
+                .push_str(&format!("{}: {}", i, construct_name(&process_conf)));
             if let Some(process) = data.process_array.get_mut(i) {
-                let _ = writeln!(stdout(), " {}", process.get_status());
+		 logging.render
+                    .push_str(&format!(" {}\n", process.get_status()));
             } else {
-                let _ = writeln!(stdout(), " no entry in porcess_array for index: {}", i);
+                logging.render.push_str(&format!("\n"));
             }
+        } else {
+            logging.render.push_str(&format!("\n"));
         }
     }
 }
 
-fn print_process_details(process: (&SingleProcessStruct, &ProcessConfig)) {}
+fn get_process_status(process: &mut SingleProcessStruct) -> String {
+    let mut ret = String::from("");
+    match &mut process.child {
+        Ok(child) => match child.try_wait() {
+            Ok(code_opt) => match code_opt {
+                Some(code) => {
+                    ret.push_str(&format!("Finished: {}\n", code.to_string()));
+                }
+                None => ret.push_str("Running\n"),
+            },
+            Err(err) => ret.push_str(&format!("{}\n", err.to_string())),
+        },
+        Err(err) => ret.push_str(&format!("{}\n", err.to_string())),
+    }
+    ret
+}
 
-fn get_process_conf(data: &AllData, idx: usize) -> Option<&ProcessConfig> {
+fn print_process_details(process: (&mut SingleProcessStruct, ProcessConfig), logging: &mut Logger) {
+    let _ = writeln!(logging.d, "print_detailed_singular: ");
+    logging
+        .render
+        .push_str(&format!("Name: {}\n", construct_name(&process.1)));
+    logging
+        .render
+        .push_str(&format!("Status: {}\n", get_process_status(process.0)));
+}
+
+fn get_process_conf<'a>(
+    data: &'a AllData,
+    idx: usize,
+    logging: &mut Logger,
+) -> Option<ProcessConfig> {
     let mut iter = data.monitored_group_structs.iter();
+    let _ = write!(logging.d, "get_process_conf idx({}): ", idx);
     while let Some(process_group) = iter.next() {
+        let _ = writeln!(
+            logging.d,
+            "process_group.end_idx: {}",
+            process_group.end_idx
+        );
         if idx < process_group.end_idx as usize {
-            return Some(&process_group.conf);
+            return Some(process_group.conf.clone());
         }
     }
+    let _ = writeln!(logging.d, "None");
     None
 }
 
-fn get_process_data(data: &AllData, idx: usize) -> Option<(&SingleProcessStruct, &ProcessConfig)> {
-    if let Some(process) = data.process_array.get(data.display.idx as usize) {
-        if let Some(process_conf) = get_process_conf(data, idx) {
+fn get_process_data<'a>(
+    data: &'a mut AllData,
+    idx: usize,
+    logging: &mut Logger,
+) -> Option<(&'a mut SingleProcessStruct, ProcessConfig)> {
+    if let Some(process_conf) = get_process_conf(data, idx, logging) {
+        if let Some(process) = data.process_array.get_mut(data.display.idx as usize) {
             return Some((process, process_conf));
         }
     }
     None
 }
 
-fn print_middle(data: &mut AllData) {
+fn print_middle(data: &mut AllData, logging: &mut Logger) {
     match data.display.state {
-        DisplayVariant::Overview => print_process_list(data),
+        DisplayVariant::Overview => print_process_list(data, logging),
         DisplayVariant::DetailedSingular => {
-            if let Some(process_details_tuple) = get_process_data(data, data.display.idx as usize) {
-                print_process_details(process_details_tuple);
+            if let Some(process_details_tuple) =
+                get_process_data(data, data.display.idx as usize, logging)
+            {
+                print_process_details(process_details_tuple, logging);
             }
         }
     }
 }
 
-fn print_helpline(data: &AllData) {
+fn print_helpline(data: &AllData, logging: &mut Logger) {
     let _ = match data.display.state {
-        DisplayVariant::Overview => writeln!(
-            stdout(),
-            "j: Scroll Down k: Scroll Up d: Select detailed Processview r: Reload Config q: Stop Taskmaster"
-        ),
-        DisplayVariant::DetailedSingular => writeln!(
-            stdout(),
-            "s: Stop/Resume Process t: Kill Process r: Reload Process d: Overview q: Close Taskmaster"
-        ),
+        DisplayVariant::Overview => 
+			logging.render.push_str(&format!("j: Scroll Down k: Scroll Up d: Select detailed Processview r: Reload Config q: Stop Taskmaster\n")),
+        DisplayVariant::DetailedSingular => 
+			logging.render.push_str(&format!("s: Stop/Resume Process t: Kill Process r: Reload Process d: Overview q: Close Taskmaster\n")),
     };
 }
 
-// fn update_programs(data: &mut AllData) {}
-
-fn print_terminal(_data: &mut AllData) {
+fn print_terminal(_data: &mut AllData, logging: &mut Logger) {
+	logging.render.clear();
+	print_header(_data, logging);
+	print_middle(_data, logging);
+	print_helpline(_data, logging);
     let _ = disable_raw_mode();
     let _ = execute!(
         stdout(),
         MoveTo(0, 0),
-        terminal::Clear(terminal::ClearType::All)
+        terminal::Clear(terminal::ClearType::All),
+		Hide
     );
-    print_header(_data);
-    print_middle(_data);
-    print_helpline(_data);
+    let _ = write!(stdout(), "{}", logging.render);
     let _ = enable_raw_mode();
 }
 
-pub fn check_for_events(mut data: AllData) -> io::Result<()> {
+///main Loop
+///
+///only returns if theres an error with reading Terminal
+pub fn check_for_events(mut data: AllData, logging: &mut Logger) -> io::Result<()> {
     let _ = enable_raw_mode();
-    let _ = writeln!(data.debug_file, "Start of Keyloop");
+    let _ = writeln!(logging.d, "Start of Keyloop");
     loop {
-        if poll(Duration::from_millis(500))? {
+        if poll(Duration::from_secs(1))? {
             match read()? {
-                Event::Key(event) => key_press(event, &mut data),
+                Event::Key(event) => key_press(event, &mut data, logging),
                 Event::FocusGained => println!("FocusGained"),
                 Event::FocusLost => println!("FocusLost"),
-                Event::Resize(width, height) => println!("New size {}x{}", width, height),
+                // Event::Resize(width, height) => println!("New size {}x{}", width, height),
                 _ => panic!("smth else happened"),
             };
-        } else {
-            // update_programs(&mut data);
         }
-        print_terminal(&mut data);
+        print_terminal(&mut data, logging);
     }
 }

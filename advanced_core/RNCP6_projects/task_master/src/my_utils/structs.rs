@@ -1,11 +1,22 @@
 use crate::my_utils::enums::*;
 use serde::Deserialize;
-use std::fs::File;
-use std::process::Command;
+// use std::fs::File;
+use std::{fs::File, process::Command};
 
 pub struct DisplayState {
     pub state: DisplayVariant,
     pub idx: usize,
+    pub renderer: String,
+}
+
+impl DisplayState {
+    pub fn init() -> Self {
+        DisplayState {
+            state: DisplayVariant::Overview,
+            idx: 0,
+            renderer: String::from(""),
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -30,7 +41,12 @@ pub struct AllData {
     pub monitored_group_structs: Vec<ProcessGroupStruct>,
     pub process_array: Vec<SingleProcessStruct>,
     pub display: DisplayState,
-    pub debug_file: File,
+    // pub debug_file: File,
+}
+
+pub struct Logger {
+    pub d: File,
+    pub render: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]

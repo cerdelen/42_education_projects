@@ -7,7 +7,9 @@ use std::process::exit;
 
 use crate::terminal::check_for_events;
 use config::ConfigError;
-use my_utils::enums::*;
+use crossterm::cursor::Show;
+use crossterm::execute;
+use crossterm::terminal::disable_raw_mode;
 use my_utils::structs::*;
 
 fn print_config_of_process(writer: &mut File, process: &ProcessGroupStruct) {
@@ -18,30 +20,30 @@ fn print_config_of_process(writer: &mut File, process: &ProcessGroupStruct) {
     );
 }
 
-fn build_process_groups(config: &TaskConfig, debug_file: &mut File) -> Vec<ProcessGroupStruct> {
+fn build_process_groups(config: &TaskConfig, logging: &mut Logger) -> Vec<ProcessGroupStruct> {
     let mut process_idx: usize = 0;
     let mut process_groups: Vec<ProcessGroupStruct> = vec![];
     process_groups.reserve(config.applications.len());
     let _ = writeln!(
-        debug_file,
+        &mut logging.d,
         "Reserved space for Config array: {}",
         config.applications.len()
     );
     for app in &config.applications {
+        process_groups.push(app.build_command(process_idx, logging));
         process_idx = process_idx + app.amt;
-        process_groups.push(app.build_command(process_idx));
     }
-    let _ = writeln!(debug_file, "Processes groups[{}]:", process_groups.len());
+    let _ = writeln!(logging.d, "Processes groups[{}]:", process_groups.len());
     let mut iter = process_groups.iter();
     while let Some(process) = iter.next() {
-        print_config_of_process(debug_file, process)
+        print_config_of_process(&mut logging.d, process)
     }
     process_groups
 }
 
 fn launch_processes(
     groups: &mut Vec<ProcessGroupStruct>,
-    debug_file: &mut File,
+    logging: &mut Logger,
 ) -> Vec<SingleProcessStruct> {
     let mut processes: Vec<SingleProcessStruct> = vec![];
     println!("starting with launch processes");
@@ -52,41 +54,43 @@ fn launch_processes(
             i = i + 1;
         }
     }
-    let _ = writeln!(debug_file, "Processes array len: {}", processes.len());
+    let _ = writeln!(logging.d, "Processes array len: {}", processes.len());
     processes
 }
 
-fn setup_debug() -> Option<File> {
-    match File::create("debug_dump") {
-        Ok(file) => Some(file),
-        Err(err) => {
-            let _ = writeln!(stdout(), "Couldnt open Debug File: {}", err);
-            None
-        }
+fn setup_logging() -> Logger {
+    Logger {
+        d: match File::create("debug_dump") {
+            Ok(file) => file,
+            Err(err) => {
+                let _ = writeln!(stdout(), "Fatal Error: Couldnt open Debug File!\n{}", err);
+                exit(1);
+            }
+        },
+        render: String::from(""),
     }
 }
 
 fn main() -> Result<(), ConfigError> {
-    let mut debug_file = match setup_debug() {
-        Some(file) => file,
-        None => exit(1),
-    };
+    let mut logging = setup_logging();
 
     let config: TaskConfig = TaskConfig::build()?;
 
-    let mut process_groups: Vec<ProcessGroupStruct> =
-        build_process_groups(&config, &mut debug_file);
+    let mut process_groups: Vec<ProcessGroupStruct> = build_process_groups(&config, &mut logging);
 
     let state = AllData {
-        display: DisplayState {
-            state: DisplayVariant::Overview,
-            idx: 0,
-        },
-        process_array: launch_processes(&mut process_groups, &mut debug_file),
+        display: DisplayState::init(),
+        process_array: launch_processes(&mut process_groups, &mut logging),
         monitored_group_structs: process_groups,
-        debug_file,
     };
 
-    let _ = check_for_events(state);
+    match check_for_events(state, &mut logging) {
+        Ok(_) => (),
+        Err(err) => {
+            let _ = writeln!(logging.d, "{}", err);
+        }
+    };
+    let _ = execute!(stdout(), Show);
+    let _ = disable_raw_mode();
     Ok(())
 }

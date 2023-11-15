@@ -1,8 +1,11 @@
 use crate::my_utils::structs::{
-    ProcessConfig, ProcessGroupStruct, SingleProcessStruct, TaskConfig,
+    Logger, ProcessConfig, ProcessGroupStruct, SingleProcessStruct, TaskConfig,
 };
 use config::{self, Config, ConfigError, FileFormat};
-use std::process::{Command, Stdio};
+use std::{
+    io::Write,
+    process::{Command, Stdio},
+};
 
 impl ProcessGroupStruct {
     pub fn launch_one_process(&mut self, processes: &mut Vec<SingleProcessStruct>) {
@@ -23,7 +26,7 @@ impl ProcessGroupStruct {
 }
 
 impl ProcessConfig {
-    pub fn build_command(&self, idx: usize) -> ProcessGroupStruct {
+    pub fn build_command(&self, idx: usize, logging: &mut Logger) -> ProcessGroupStruct {
         let mut cmd = Command::new(&self.launch_command);
         cmd.args(self.args.as_deref().unwrap_or_default());
         cmd.envs(
@@ -56,6 +59,15 @@ impl ProcessConfig {
             }
         };
         cmd.current_dir(self.work_dir.as_ref().unwrap_or(&".".to_string()));
+
+        let _ = writeln!(
+            logging.d,
+            "{}: amt:{} idx:{} end_idx:{}",
+            &self.name.clone().unwrap_or("nameless".to_string()).clone(),
+            self.amt,
+            idx,
+            idx + self.amt
+        );
 
         ProcessGroupStruct {
             start_time: std::time::Instant::now()
