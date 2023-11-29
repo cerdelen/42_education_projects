@@ -10,7 +10,7 @@ class SingleProcess {
     ~SingleProcess();
 
   private:
-    size_t remaining_retries;
+    // size_t remaining_retries;
 };
 
 #endif // !SingleProcess

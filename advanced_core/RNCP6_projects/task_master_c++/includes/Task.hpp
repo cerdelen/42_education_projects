@@ -4,6 +4,7 @@
 #include <CommandConfig.hpp>
 #include <SingleProcess.hpp>
 #include <vector>
+
 class Task {
   public:
     Task(CommandConfig& conf);
@@ -12,8 +13,8 @@ class Task {
     ~Task();
 
   private:
-    CommandConfig& _conf;
-    std::vector<SingleProcess> _processes;
+    CommandConfig&                _conf;
+    std::vector<SingleProcess>    _processes;
 };
 
 #endif // !Task

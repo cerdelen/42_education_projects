@@ -1,8 +1,9 @@
-#include <Global.hpp>
+#include <TaskMaster.hpp>
+
 
 int main(int argc, char* argv[]) {
-    Global data;
-    (void)argc;
-    (void)argv;
+    TaskMaster  tasky(argc, argv);
+    tasky.unser_input_loop();
+    std::cout << "Loop ended" << std::endl;
     return (0);
 }

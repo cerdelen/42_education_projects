@@ -1,6 +1,7 @@
 CC			=	c++
 ALL_INC 	=	-Iincludes
-CFLAGS		=	-Wall -Wextra -Werror $(ALL_INC)
+CFLAGS		+=	$(ALL_INC)
+# CFLAGS		+=	-Wall -Wextra -Werror -g -fsanitize=address
 SRC_DIR 	=	src
 OBJ_DIR 	=	obj
 SRC_DIRS	:=	$(shell find $(SRC_DIR) -type d)
@@ -31,5 +32,8 @@ clean:
 fclean: clean
 	@$(RM) $(TARGET)
 	@echo "[92m${TARGET} successfully cleaned TARGET![0m"
+
+run: all
+	./$(TARGET)
 
 re: fclean all

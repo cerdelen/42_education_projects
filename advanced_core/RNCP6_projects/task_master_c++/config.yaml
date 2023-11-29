@@ -1,0 +1,36 @@
+applications:
+  - :
+    name: "app_1"
+    launch_command: "ls"
+    args:
+      - "arg1"
+      - "arg2"
+    amnt: 5
+    time_of_launch: 0
+    restart: Always
+    unexpected_signals:
+      - "Signal1"
+      - "Signal2"
+    restart_tries: 2
+    graceful_signal: "Signal1"
+    graceful_period: 12
+    stdout: "stdout"
+    stderr: "stderr"
+    envs:
+      - ["environments", "allo"]
+      - ["second env", "allooo)"]
+    work_dir: "."
+  # - app_2:
+  #   launch_command: "./a.out arg1 arg2"
+  #   amnt: 1
+  #   time_of_launch: 0
+  #   restart: Always
+  #   unexpected_signals: "unexxxpected"
+  #   restart_tries: 2
+  #   graceful_signal: "Signal1"
+  #   graceful_period: 12
+  #   redirect: "redirecrtion"
+  #   envs:
+  #     - "environments"
+  #     - "second env"
+  #   work_dir: "."
