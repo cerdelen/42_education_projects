@@ -4,12 +4,12 @@
 #include <CommandConfig.hpp>
 #include <Task.hpp>
 #include <UI.hpp>
-#include <vector>
-#include <unistd.h>
 #include <iostream>
+#include <unistd.h>
+#include <vector>
 
-#include <iostream>     // std::cout
-#include <fstream>      // std::ifstream
+#include <fstream>  // std::ifstream
+#include <iostream> // std::cout
 
 // #define ANNOUNCE_ME std::cout << __FUNCTION__ << std::endl;
 #define LOGGING _logger << __FUNCTION__ << "\n";
@@ -29,14 +29,14 @@ class TaskMaster {
     void cmd_j();
     void cmd_k();
     void select();
-    void print();
+    // void print();
     void deselect();
 
   private:
-    std::ofstream                 _logger;
-    UI                  _ui;
+    std::ofstream _logger;
+    UI _ui;
     // CommandConfig	 				command_config;
-    std::vector<Task>   _tasks;
+    std::vector<Task> _tasks;
 };
 
 #endif // !TaskMaster

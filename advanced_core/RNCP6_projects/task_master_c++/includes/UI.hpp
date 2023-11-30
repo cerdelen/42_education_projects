@@ -4,35 +4,46 @@
 #include <iostream>
 
 enum ViewMode {
-	OverView,
-	TaskView,
-	ProcessView,
+    OverView,
+    TaskView,
+    ProcessView,
 };
 
-class UI
-{
-	public:
-		UI();
-		UI(const UI &copy);
-		UI&		operator=(const UI &copy);
-		~UI();
+struct UIState {
+    ViewMode mode;
+    size_t idx;
+    /// check which mode
+    ///
+    /// OverView    -> std::vector<Task>
+    ///
+    /// TaskView    -> std::vector<SingleProcess>
+    ///
+    /// ProcessView -> SingleProcess
+    void* pointed_at;
+};
 
-		void	cmd_j();
-		void	cmd_k();
-		void	select();
-		void	print();
-		void	deselect();
+class UI {
+  public:
+    UI();
+    UI(const UI& copy);
+    UI& operator=(const UI& copy);
+    ~UI();
 
-		void	render();
-		size_t	get_idx();
-		void	set_idx(int change);
+    void cmd_j();
+    void cmd_k();
+    void select();
+    void change_state(void* target);
+    void deselect();
 
-	private:
-		size_t			_ui_idx;
-		ViewMode		_mode;
-		std::string		_mode_render;
-		std::string		_middle_part;
-		std::string		_bottom_part;
+    const UIState& get_state();
+    void render();
+
+  private:
+    size_t get_size_of_state();
+    UIState _state;
+    std::string _mode_render;
+    std::string _middle_part;
+    std::string _bottom_part;
 };
 
 #endif // !UI

@@ -1,6 +1,6 @@
 CC			=	c++
 ALL_INC 	=	-Iincludes
-CFLAGS		+=	$(ALL_INC)
+CFLAGS		+=	$(ALL_INC) -std=c++11
 # CFLAGS		+=	-Wall -Wextra -Werror -g -fsanitize=address
 SRC_DIR 	=	src
 OBJ_DIR 	=	obj
@@ -30,7 +30,7 @@ clean:
 	@echo "[92m${TARGET} successfully cleaned objects![0m"
 
 fclean: clean
-	@$(RM) $(TARGET)
+	@$(RM) $(TARGET) Log_TaskMaster.txt
 	@echo "[92m${TARGET} successfully cleaned TARGET![0m"
 
 run: all

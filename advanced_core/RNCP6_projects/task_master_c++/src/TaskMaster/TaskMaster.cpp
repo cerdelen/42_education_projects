@@ -1,18 +1,18 @@
+// #include "UI.hpp"
 #include <TaskMaster.hpp>
 
 TaskMaster::TaskMaster(int argc, char* argv[]) {
     (void)argc;
     (void)argv;
-    this->_logger.open("TaskMaster_Log.txt", std::ios::trunc);
+    this->_logger.open("Log_TaskMaster.txt", std::ios::trunc);
     LOGGING
 }
-TaskMaster::TaskMaster(const TaskMaster& copy) { 
+TaskMaster::TaskMaster(const TaskMaster& copy) {
     LOGGING
     *this = copy;
-    }
+}
 TaskMaster& TaskMaster::operator=(const TaskMaster& copy) {
-    LOGGING
-    (void)copy;
+    LOGGING(void) copy;
     return (*this);
 }
 
@@ -22,17 +22,16 @@ TaskMaster::~TaskMaster() {
     _logger.close();
 }
 
-void    TaskMaster::unser_input_loop() {
+void TaskMaster::unser_input_loop() {
     LOGGING
-    std::string     input;
+    std::string input;
 
-    while (true)
-    {
+    while (true) {
         this->_ui.render();
         std::getline(std::cin, input); // blocked until command givven
         std::cout << "Our Inout: \"" << input << "\"" << std::endl;
         if (input == "q" || input == "quit")
-            return ;
+            return;
         if (input == "j" || input == "up")
             this->cmd_j();
         if (input == "k" || input == "down")
@@ -41,8 +40,8 @@ void    TaskMaster::unser_input_loop() {
             this->reload();
         if (input == "s" || input == "select")
             this->select();
-        if (input == "p" || input == "print") // print details
-            this->print();
+        // if (input == "p" || input == "print") // print details
+        //     this->print();
         if (input == "t" || input == "kill")
             this->kill();
         if (input == "d" || input == "deselect")
@@ -54,27 +53,36 @@ void TaskMaster::reload() {
     LOGGING
     std::cout << "Called Reload commad" << std::endl;
 }
-void TaskMaster::cmd_j() {
-    LOGGING
-    this->_ui.cmd_j();
-}
-void TaskMaster::cmd_k() {
-    LOGGING
-    this->_ui.cmd_j();
-}
 void TaskMaster::select() {
     LOGGING
     this->_ui.select();
 }
-void TaskMaster::print() {
-    LOGGING
-    this->_ui.print();
-}
+// void TaskMaster::print() {
+//     LOGGING
+//     this->_ui.print();
+// }
+/// Changes UIState (-1)
 void TaskMaster::deselect() {
     LOGGING
     this->_ui.deselect();
 }
+/// Kills depending on UIState either a whole Task or a single Process
 void TaskMaster::kill() {
     LOGGING
     std::cout << "Called kill cmd" << std::endl;
+}
+void TaskMaster::cmd_j() {
+    LOGGING _logger << "UIState: { mode: " << this->_ui.get_state().mode
+                    << ", idx: " << this->_ui.get_state().idx << " }\n";
+    this->_ui.cmd_j();
+    _logger << "UIState: { mode: " << this->_ui.get_state().mode
+            << ", idx: " << this->_ui.get_state().idx << " }\n";
+}
+void TaskMaster::cmd_k() {
+    LOGGING
+    _logger << "UIState: { mode: " << this->_ui.get_state().mode
+            << ", idx: " << this->_ui.get_state().idx << " }\n";
+    this->_ui.cmd_k();
+    _logger << "UIState: { mode: " << this->_ui.get_state().mode
+            << ", idx: " << this->_ui.get_state().idx << " }\n";
 }
