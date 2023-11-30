@@ -46,7 +46,7 @@ void UI::render() {
               << _middle_part << "\n"
               << _bottom_part;
 }
-const UIState& UI::get_state() { return (_state); }
+const UIState& UI::get_state() const { return (_state); }
 
 size_t UI::get_size_of_state() {
     if (this->_state.pointed_at == NULL)
@@ -58,4 +58,19 @@ size_t UI::get_size_of_state() {
     if (this->_state.mode == ViewMode::ProcessView)
         return 1;
     return 0;
+}
+
+std::ostream& operator<<(std::ostream& os, const UI& ui) {
+    const UIState& state = ui.get_state();
+    if (state.mode == ViewMode::OverView)
+        os << "UIState: { mode: OverView";
+    else if (state.mode == ViewMode::TaskView)
+        os << "UIState: { mode: TaskView";
+    else if (state.mode == ViewMode::ProcessView)
+        os << "UIState: { mode: ProcessView";
+    else
+        os << "UIState: { mode: Error";
+
+    os << ", idx: " << state.idx << " }\n";
+    return (os);
 }

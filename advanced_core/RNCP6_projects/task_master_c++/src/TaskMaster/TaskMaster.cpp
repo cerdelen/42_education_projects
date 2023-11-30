@@ -72,17 +72,22 @@ void TaskMaster::kill() {
     std::cout << "Called kill cmd" << std::endl;
 }
 void TaskMaster::cmd_j() {
-    LOGGING _logger << "UIState: { mode: " << this->_ui.get_state().mode
-                    << ", idx: " << this->_ui.get_state().idx << " }\n";
+    LOGGING
+    // _logger << "UIState: { mode: " << this->_ui.get_state().mode
+    //                    << ", idx: " << this->_ui.get_state().idx << " }\n";
+    _logger << "Before: " << this->_ui;
     this->_ui.cmd_j();
-    _logger << "UIState: { mode: " << this->_ui.get_state().mode
-            << ", idx: " << this->_ui.get_state().idx << " }\n";
+    _logger << "After: " << this->_ui;
+    // _logger << "UIState: { mode: " << this->_ui.get_state().mode
+    //         << ", idx: " << this->_ui.get_state().idx << " }\n";
 }
 void TaskMaster::cmd_k() {
     LOGGING
-    _logger << "UIState: { mode: " << this->_ui.get_state().mode
-            << ", idx: " << this->_ui.get_state().idx << " }\n";
+    // _logger << "UIState: { mode: " << this->_ui.get_state().mode
+    //         << ", idx: " << this->_ui.get_state().idx << " }\n";
+    _logger << "Before: " << this->_ui;
     this->_ui.cmd_k();
-    _logger << "UIState: { mode: " << this->_ui.get_state().mode
-            << ", idx: " << this->_ui.get_state().idx << " }\n";
+    _logger << "After: " << this->_ui;
+    // _logger << "UIState: { mode: " << this->_ui.get_state().mode
+    // << ", idx: " << this->_ui.get_state().idx << " }\n";
 }

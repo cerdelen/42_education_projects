@@ -35,7 +35,7 @@ class UI {
     void change_state(void* target);
     void deselect();
 
-    const UIState& get_state();
+    const UIState& get_state() const;
     void render();
 
   private:
@@ -45,5 +45,7 @@ class UI {
     std::string _middle_part;
     std::string _bottom_part;
 };
+
+std::ostream& operator<<(std::ostream& os, const UI& ui);
 
 #endif // !UI
