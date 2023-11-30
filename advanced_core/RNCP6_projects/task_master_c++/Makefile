@@ -11,7 +11,7 @@ SRC			+=	$(wildcard $(SRC_DIR)/**/*.cpp)
 OBJ			=	$(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC))
 
 
-TARGET		=	TaskMaster
+TARGET		=	TaskMaster_exec
 
 all: $(OBJ_DIRS) $(TARGET)
 

@@ -1,6 +1,6 @@
 compile_commands.json
 .clang-format
-TaskMaster
+TaskMaster_exec
 obj
 .cache
 TaskMaster_Log.txt
